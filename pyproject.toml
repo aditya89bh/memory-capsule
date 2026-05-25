@@ -11,6 +11,9 @@ dependencies = [
   "numpy",
 ]
 
+[project.scripts]
+memory-capsule = "capsule.cli:main"
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
