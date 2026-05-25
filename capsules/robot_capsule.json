@@ -1,0 +1,27 @@
+{
+  "capsule_id": "robot-capsule-demo",
+  "owner": "Lab Robot",
+  "agent": "robotics-agent",
+  "version": "0.1.0",
+  "summary": "Robot operating context and learned environment notes.",
+  "memories": [
+    {
+      "id": "mem-robot-001",
+      "text": "Prefer safe, reversible actions before attempting physical-world changes.",
+      "kind": "safety_rule",
+      "tags": ["robotics", "safety"],
+      "metadata": {"priority": "high"},
+      "created_at": "2026-05-25T00:00:00Z"
+    },
+    {
+      "id": "mem-robot-002",
+      "text": "The lab demo uses ROS/RViz concepts to explain embodied memory.",
+      "kind": "context",
+      "tags": ["ros", "rviz", "embodied-ai"],
+      "metadata": {"source": "sample"},
+      "created_at": "2026-05-25T00:01:00Z"
+    }
+  ],
+  "metadata": {"example": true},
+  "updated_at": "2026-05-25T00:02:00Z"
+}

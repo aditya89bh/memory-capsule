@@ -1,0 +1,27 @@
+{
+  "capsule_id": "user-capsule-demo",
+  "owner": "Aditya",
+  "agent": "personal-assistant",
+  "version": "0.1.0",
+  "summary": "Portable user preferences and project continuity for agent handoffs.",
+  "memories": [
+    {
+      "id": "mem-user-001",
+      "text": "Aditya prefers concise, action-oriented updates with concrete evidence.",
+      "kind": "preference",
+      "tags": ["communication", "updates"],
+      "metadata": {"source": "sample"},
+      "created_at": "2026-05-25T00:00:00Z"
+    },
+    {
+      "id": "mem-user-002",
+      "text": "Current interest: portable memory files that let AI agents transfer continuity.",
+      "kind": "project",
+      "tags": ["memory", "agents", "continuity"],
+      "metadata": {"source": "sample"},
+      "created_at": "2026-05-25T00:01:00Z"
+    }
+  ],
+  "metadata": {"example": true},
+  "updated_at": "2026-05-25T00:02:00Z"
+}

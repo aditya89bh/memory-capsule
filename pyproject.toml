@@ -1,0 +1,16 @@
+[project]
+name = "memory-capsule"
+version = "0.1.0"
+description = "Portable memory file and store for AI agents."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic",
+  "sentence-transformers",
+  "faiss-cpu",
+  "numpy",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
