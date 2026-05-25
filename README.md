@@ -24,10 +24,10 @@ A memory capsule gives agents a common memory artifact:
 capsule/
   schema.py       Pydantic models for MemoryItem and MemoryCapsule
   store.py        Add, load, and save memories
-  retrieval.py    Keyword retrieval over text, tags, and kinds
+  retrieval.py    Keyword retrieval over text, tags, and kind
   serializer.py   JSON import/export helpers
   embeddings.py   Optional SentenceTransformers embedding helper
-  init.py         Capsule factory helper
+  cli.py          Command line interface
 ```
 
 Data flow:
@@ -73,14 +73,46 @@ pip install -r requirements.txt
 python demo.py
 ```
 
-Minimal usage:
+## CLI Usage
+
+```bash
+memory-capsule create capsules/demo.json --owner Aditya
+
+memory-capsule add capsules/demo.json \
+  "Robots should preserve operational continuity" \
+  --kind principle \
+  --tag robotics
+
+memory-capsule search capsules/demo.json continuity
+
+memory-capsule show capsules/demo.json --pretty
+```
+
+## Multi-Agent Handoff Demo
+
+```bash
+python examples/multi_agent_handoff.py
+```
+
+This demonstrates:
+
+1. A source agent exporting structured continuity.
+2. A receiving agent loading the capsule.
+3. Retrieval of relevant memories.
+4. Continuation of work without the original session history.
+
+## Minimal Usage
 
 ```python
-from capsule.init import new_capsule
+from capsule import new_capsule
 from capsule.retrieval import keyword_search
 
 store = new_capsule(owner="Ada", agent="assistant")
-store.add_memory("Ada prefers short answers with examples.", kind="preference", tags=["style"])
+store.add_memory(
+    "Ada prefers short answers with examples.",
+    kind="preference",
+    tags=["style"],
+)
 store.save("capsules/ada_capsule.json")
 
 results = keyword_search(store.capsule, "short style")
@@ -96,3 +128,4 @@ print(results[0].text)
 - [ ] CLI for validating and querying capsule files
 - [ ] Versioned schema migrations
 - [ ] Optional encryption for sensitive capsules
+- [ ] Shared capsules across multiple agents
