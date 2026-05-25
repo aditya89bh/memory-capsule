@@ -1,66 +1,68 @@
 # memory-capsule
 
-Portable memory file and store for AI agents.
+Portable, inspectable memory infrastructure for AI agents.
+
+`memory-capsule` gives agents a transferable continuity object: a structured memory file/store that can move across sessions, models, tools, and runtimes.
 
 ## Thesis
 
-AI agents need continuity that is portable, inspectable, and easy to hand off. `memory-capsule` treats memory as a small JSON capsule: structured enough for tools, simple enough for humans, and independent of any one agent runtime.
+Agents should not lose continuity just because the session, model, tool, or runtime changes.
+
+Most agent memory today is either hidden inside prompts, trapped in product-specific databases, or buried in vector stores. `memory-capsule` treats memory as an explicit artifact: readable by humans, usable by agents, and portable across systems.
+
+## What this repo includes
+
+- Pydantic memory capsule schema
+- JSON import/export
+- CLI for create/add/search/show/validate/migrate
+- keyword retrieval
+- semantic retrieval with FAISS + SentenceTransformers
+- multi-agent handoff demo
+- capsule merge + conflict reporting
+- validation layer
+- schema migration scaffolding
+- SQLite persistence backend
+- FastAPI service layer
+- API-key authentication
+- lightweight metrics
+- Docker deployment
+- CI tests
+- retrieval benchmark
+- architecture documentation
 
 ## Why this matters
 
-Most agent memory is trapped inside a product, prompt, database, or hidden vector store. That makes it hard to migrate agents, audit what they know, or transfer context safely between assistants, coding agents, robots, and evaluation systems.
-
-A memory capsule gives agents a common memory artifact:
+A memory capsule gives agents a common continuity artifact:
 
 - human-readable JSON
 - explicit schema and timestamps
 - import/export across runtimes
-- retrieval that can start simple and grow toward embeddings
-- safer handoffs because memory can be reviewed before transfer
+- inspectable memory before transfer
+- retrieval by keyword or embedding similarity
+- mergeable state across multiple agents
+- deployable API mode for agent systems
 
-## Architecture overview
+## Architecture
 
 ```text
-capsule/
-  schema.py       Pydantic models for MemoryItem and MemoryCapsule
-  store.py        Add, load, and save memories
-  retrieval.py    Keyword retrieval over text, tags, and kind
-  serializer.py   JSON import/export helpers
-  embeddings.py   Optional SentenceTransformers embedding helper
-  cli.py          Command line interface
+Agent A
+  │
+  │ writes memories
+  ▼
+Memory Capsule
+  │
+  ├── JSON export/import
+  ├── SQLite persistence
+  ├── keyword retrieval
+  ├── semantic retrieval
+  ├── validation/migration
+  └── merge/conflict reporting
+  │
+  ▼
+Agent B / API / CLI / future MCP server
 ```
 
-Data flow:
-
-1. Create a `MemoryCapsule` for an owner/agent.
-2. Add `MemoryItem` entries as preferences, facts, project notes, or safety rules.
-3. Save the capsule as JSON.
-4. Import it in another agent.
-5. Retrieve relevant memory by keyword today; add semantic retrieval tomorrow.
-
-## Example capsule JSON
-
-```json
-{
-  "capsule_id": "user-capsule-demo",
-  "owner": "Aditya",
-  "agent": "personal-assistant",
-  "version": "0.1.0",
-  "summary": "Portable user preferences and project continuity for agent handoffs.",
-  "memories": [
-    {
-      "id": "mem-user-001",
-      "text": "Aditya prefers concise, action-oriented updates with concrete evidence.",
-      "kind": "preference",
-      "tags": ["communication", "updates"],
-      "metadata": {"source": "sample"},
-      "created_at": "2026-05-25T00:00:00Z"
-    }
-  ],
-  "metadata": {"example": true},
-  "updated_at": "2026-05-25T00:02:00Z"
-}
-```
+See [`docs/architecture.md`](docs/architecture.md) for the full system overview.
 
 ## Quickstart
 
@@ -69,7 +71,7 @@ git clone https://github.com/aditya89bh/memory-capsule.git
 cd memory-capsule
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 python demo.py
 ```
 
@@ -84,24 +86,59 @@ memory-capsule add capsules/demo.json \
   --tag robotics
 
 memory-capsule search capsules/demo.json continuity
-
 memory-capsule show capsules/demo.json --pretty
+memory-capsule validate capsules/demo.json
+memory-capsule migrate capsules/demo.json
 ```
 
-## Multi-Agent Handoff Demo
+## API Service
+
+Run locally:
 
 ```bash
-python examples/multi_agent_handoff.py
+uvicorn capsule.api:app --reload
 ```
 
-This demonstrates:
+Run with Docker:
 
-1. A source agent exporting structured continuity.
-2. A receiving agent loading the capsule.
-3. Retrieval of relevant memories.
-4. Continuation of work without the original session history.
+```bash
+docker compose up
+```
 
-## Minimal Usage
+Core endpoints:
+
+```text
+GET  /health
+GET  /metrics
+GET  /capsules
+POST /capsules
+GET  /capsules/{capsule_id}
+POST /capsules/{capsule_id}/search
+```
+
+Optional API-key auth:
+
+```bash
+export MEMORY_CAPSULE_API_KEY="dev-secret"
+```
+
+Then send:
+
+```text
+X-API-Key: dev-secret
+```
+
+## Demos
+
+```bash
+python demo.py
+python examples/multi_agent_handoff.py
+python examples/capsule_merge_demo.py
+python examples/semantic_retrieval_demo.py
+python benchmarks/continuity_benchmark.py
+```
+
+## Minimal Python Usage
 
 ```python
 from capsule import new_capsule
@@ -119,13 +156,82 @@ results = keyword_search(store.capsule, "short style")
 print(results[0].text)
 ```
 
+## Multi-Agent Handoff
+
+```bash
+python examples/multi_agent_handoff.py
+```
+
+This demonstrates:
+
+1. A source agent exporting structured continuity.
+2. A receiving agent loading the capsule.
+3. Retrieval of relevant memories.
+4. Continuation of work without the original session history.
+
+## Capsule Merge
+
+```bash
+python examples/capsule_merge_demo.py
+```
+
+This demonstrates:
+
+1. Two agents producing separate memory capsules.
+2. Duplicate memory removal.
+3. Conflict reporting.
+4. Shared continuity state.
+
+## Production Status
+
+This repo is production-oriented, but not yet enterprise-hardened.
+
+Implemented:
+
+- service API
+- Docker deployment
+- SQLite backend
+- API-key auth
+- validation
+- migrations
+- metrics
+- logging
+- CI
+
+Remaining for serious production deployment:
+
+- full Postgres backend
+- async DB pooling
+- encryption
+- RBAC
+- Prometheus/Grafana integration
+- MCP-compatible server
+- distributed capsule locking
+- background embedding jobs
+
 ## Roadmap
 
-- [ ] Semantic retrieval with FAISS indexes
-- [ ] Capsule merge and conflict resolution
-- [ ] Memory privacy labels and redaction helpers
-- [ ] Agent-to-agent transfer protocol examples
-- [ ] CLI for validating and querying capsule files
-- [ ] Versioned schema migrations
-- [ ] Optional encryption for sensitive capsules
-- [ ] Shared capsules across multiple agents
+- [x] Portable capsule schema
+- [x] JSON import/export
+- [x] CLI
+- [x] keyword retrieval
+- [x] semantic retrieval
+- [x] capsule merge
+- [x] validation
+- [x] migrations
+- [x] SQLite backend
+- [x] FastAPI service
+- [x] Docker deployment
+- [x] API-key auth
+- [x] metrics
+- [ ] full Postgres backend
+- [ ] encryption
+- [ ] MCP-compatible memory server
+- [ ] dashboard/timeline UI
+- [ ] cloud deployment templates
+
+## Positioning
+
+`memory-capsule` is not a chatbot memory toy.
+
+It is a small continuity substrate for agent systems: portable enough to inspect, structured enough to automate, and extensible enough to become shared memory infrastructure.
