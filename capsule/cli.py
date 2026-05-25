@@ -7,8 +7,11 @@ from pathlib import Path
 from typing import Sequence
 
 from .init import new_capsule
+from .migrations import CURRENT_SCHEMA_VERSION, migrate_payload
 from .retrieval import keyword_search
+from .serializer import import_capsule
 from .store import CapsuleStore
+from .validation import validate_capsule
 
 
 def _load_or_create(path: Path, owner: str = "unknown", agent: str | None = None) -> CapsuleStore:
@@ -56,6 +59,34 @@ def show_capsule(args: argparse.Namespace) -> None:
         print(f"Summary: {store.capsule.summary}")
 
 
+def validate_capsule_command(args: argparse.Namespace) -> None:
+    capsule = import_capsule(args.path)
+    report = validate_capsule(capsule)
+
+    print(f"valid: {report.valid}")
+
+    if report.errors:
+        print("errors:")
+        for error in report.errors:
+            print(f"- {error}")
+
+    if report.warnings:
+        print("warnings:")
+        for warning in report.warnings:
+            print(f"- {warning}")
+
+
+def migrate_capsule_command(args: argparse.Namespace) -> None:
+    payload = json.loads(Path(args.path).read_text(encoding="utf-8"))
+    migrated = migrate_payload(payload, target_version=CURRENT_SCHEMA_VERSION)
+
+    output_path = Path(args.output or args.path)
+    output_path.write_text(json.dumps(migrated, indent=2), encoding="utf-8")
+
+    print(f"Migrated capsule to version {CURRENT_SCHEMA_VERSION}")
+    print(f"Output: {output_path}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="memory-capsule",
@@ -89,6 +120,15 @@ def build_parser() -> argparse.ArgumentParser:
     show.add_argument("path", type=Path, help="Capsule JSON path.")
     show.add_argument("--pretty", action="store_true", help="Print full formatted JSON.")
     show.set_defaults(func=show_capsule)
+
+    validate = subparsers.add_parser("validate", help="Validate a capsule file.")
+    validate.add_argument("path", type=Path, help="Capsule JSON path.")
+    validate.set_defaults(func=validate_capsule_command)
+
+    migrate = subparsers.add_parser("migrate", help="Migrate a capsule schema version.")
+    migrate.add_argument("path", type=Path, help="Capsule JSON path.")
+    migrate.add_argument("--output", default=None, help="Optional output path.")
+    migrate.set_defaults(func=migrate_capsule_command)
 
     return parser
 
